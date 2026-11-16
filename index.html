@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Budget Keluarga</title>
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Pengaturan awal: URL Apps Script (sekali saja) -->
+<section id="setup" class="gate" hidden>
+  <div class="gate-card">
+    <div class="logo">Rp</div>
+    <h1>Hubungkan ke spreadsheet</h1>
+    <p class="muted">Tempel URL Web App dari Google Apps Script. Cukup sekali di HP ini.</p>
+    <input id="setup-url" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" placeholder="https://script.google.com/macros/s/…/exec">
+    <p id="setup-err" class="err" hidden></p>
+    <button id="setup-save" class="btn primary">Simpan</button>
+  </div>
+</section>
+
+<!-- Layar PIN: muncul setiap kali aplikasi dibuka -->
+<section id="lock" class="gate" hidden>
+  <div class="gate-card">
+    <div class="logo">Rp</div>
+    <h1>Masukkan PIN</h1>
+    <div id="pin-dots" class="dots" aria-label="PIN 6 angka"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <p id="lock-msg" class="muted lock-msg">&nbsp;</p>
+    <div id="keypad" class="keypad">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <span></span><button data-k="0">0</button><button data-k="del" aria-label="Hapus">⌫</button>
+    </div>
+    <button id="change-url" class="link">Ganti URL spreadsheet</button>
+  </div>
+</section>
+
+<!-- Aplikasi -->
+<div id="app" hidden>
+  <header class="top">
+    <div>
+      <p id="top-sub" class="top-sub">Budget Keluarga</p>
+      <h1 id="top-title">Beranda</h1>
+    </div>
+    <div class="top-actions">
+      <button id="btn-refresh" class="icon-btn" aria-label="Muat ulang data">↻</button>
+      <button id="btn-lock" class="icon-btn" aria-label="Kunci aplikasi">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section id="view-home" class="view"></section>
+    <section id="view-history" class="view" hidden></section>
+    <section id="view-budget" class="view" hidden></section>
+    <section id="view-charts" class="view" hidden></section>
+  </main>
+
+  <nav class="bottom">
+    <button data-view="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Beranda</span></button>
+    <button data-view="history"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Riwayat</span></button>
+    <button id="fab" class="fab" aria-label="Tambah transaksi"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button data-view="budget"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg><span>Budget</span></button>
+    <button data-view="charts"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Grafik</span></button>
+  </nav>
+</div>
+
+<!-- Form transaksi -->
+<div id="sheet" class="overlay" hidden>
+  <form id="tx-form" class="sheet" novalidate>
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <h2 id="form-title">Tambah transaksi</h2>
+      <button type="button" id="form-close" class="icon-btn" aria-label="Tutup">✕</button>
+    </div>
+    <div class="seg" id="form-type">
+      <button type="button" data-type="out" class="active">Pengeluaran</button>
+      <button type="button" data-type="in">Pemasukan</button>
+    </div>
+    <label class="amount">
+      <span>Rp</span>
+      <input id="f-amount" type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Nominal">
+    </label>
+    <p id="f-err" class="err" hidden></p>
+    <p class="lbl">Kategori</p>
+    <div id="f-cats" class="chips-wrap"></div>
+    <div class="row2">
+      <label><span class="lbl">Tanggal</span><input id="f-date" class="field" type="date"></label>
+      <label><span class="lbl">Rekening</span><select id="f-acc" class="field"></select></label>
+    </div>
+    <label><span class="lbl">Catatan (opsional)</span><input id="f-note" class="field" type="text" maxlength="300" placeholder="Misalnya: makan siang"></label>
+    <button id="f-save" class="btn primary" type="submit">Simpan</button>
+    <button id="f-delete" class="btn danger-ghost" type="button" hidden>Hapus transaksi</button>
+  </form>
+</div>
+
+<!-- Konfirmasi hapus -->
+<div id="confirm" class="overlay center" hidden>
+  <div class="dialog">
+    <h2>Hapus transaksi ini?</h2>
+    <p id="confirm-text" class="muted"></p>
+    <div class="row2">
+      <button id="confirm-no" class="btn ghost">Batal</button>
+      <button id="confirm-yes" class="btn danger">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
