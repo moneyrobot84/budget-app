@@ -378,3 +378,12 @@ function kirimAlert_(tx, before) {
 function rp_(n) {
   return 'Rp ' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
+/* ---------- Izin ---------- */
+
+/** Jalankan sekali dari editor (pilih "izinkan" > Run) untuk memunculkan layar izin Google yang lengkap. */
+function izinkan() {
+  var nama = SpreadsheetApp.getActiveSpreadsheet().getName();
+  MailApp.getRemainingDailyQuota();
+  Logger.log('Izin lengkap untuk: ' + nama);
+}
